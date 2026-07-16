@@ -51,6 +51,7 @@ jobs:
       - name: Build BIC-MNI deps
         run: |
           set -euxo pipefail
+          DEP_DIR_FLAGS=""
           for dep in $DEPS; do
             if [ "$dep" = libminc ]; then
               # TEMPORARY (ci validation): libminc with installed-config fixes
@@ -60,6 +61,7 @@ jobs:
               git clone --depth 1 -b develop-1.9.18 "https://github.com/BIC-MNI/$dep.git" "dep-$dep" \
                 || git clone --depth 1 "https://github.com/BIC-MNI/$dep.git" "dep-$dep"
             fi
+            # shellcheck disable=SC2086 # DEP_DIR_FLAGS is a list of -D flags
             cmake -B "dep-$dep/build" -S "dep-$dep" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -68,7 +70,8 @@ jobs:
               -DCMAKE_PREFIX_PATH="$DEPS_PREFIX" \
               -DCMAKE_INSTALL_LIBDIR=lib \
               -DBUILD_TESTING=OFF \
-              -DLIBMINC_MINC1_SUPPORT=ON
+              -DLIBMINC_MINC1_SUPPORT=ON \
+              $DEP_DIR_FLAGS
             cmake --build "dep-$dep/build" -j"$(nproc)"
             cmake --install "dep-$dep/build"
             # These projects install <NAME>Config.cmake outside CMake's
@@ -76,9 +79,13 @@ jobs:
             # <NAME>_DIR at it explicitly for the consumer configure.
             name=$(echo "$dep" | tr '[:lower:]-' '[:upper:]_')
             cfg=$(find "$DEPS_PREFIX" -name "${name}Config.cmake" -print -quit)
-            DEP_DIR_FLAGS="${DEP_DIR_FLAGS:-} -D${name}_DIR=$(dirname "$cfg")"
+            if [ -n "$cfg" ]; then
+              DEP_DIR_FLAGS="${DEP_DIR_FLAGS} -D${name}_DIR=$(dirname "$cfg")"
+            fi
           done
           echo "DEP_DIR_FLAGS=$DEP_DIR_FLAGS" >> "$GITHUB_ENV"
+          # Test scripts of some projects invoke installed dep binaries
+          echo "$DEPS_PREFIX/bin" >> "$GITHUB_PATH"
       - name: Configure + build
         run: |
           set -euxo pipefail
@@ -123,6 +130,7 @@ jobs:
       - name: Build BIC-MNI deps
         run: |
           set -euxo pipefail
+          DEP_DIR_FLAGS=""
           for dep in $DEPS; do
             if [ "$dep" = libminc ]; then
               # TEMPORARY (ci validation): libminc with installed-config fixes
@@ -132,6 +140,7 @@ jobs:
               git clone --depth 1 -b develop-1.9.18 "https://github.com/BIC-MNI/$dep.git" "dep-$dep" \
                 || git clone --depth 1 "https://github.com/BIC-MNI/$dep.git" "dep-$dep"
             fi
+            # shellcheck disable=SC2086 # DEP_DIR_FLAGS is a list of -D flags
             cmake -B "dep-$dep/build" -S "dep-$dep" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -140,7 +149,8 @@ jobs:
               -DCMAKE_PREFIX_PATH="$DEPS_PREFIX" \
               -DCMAKE_INSTALL_LIBDIR=lib \
               -DBUILD_TESTING=OFF \
-              -DLIBMINC_MINC1_SUPPORT=ON
+              -DLIBMINC_MINC1_SUPPORT=ON \
+              $DEP_DIR_FLAGS
             cmake --build "dep-$dep/build" -j"$(nproc)"
             cmake --install "dep-$dep/build"
             # These projects install <NAME>Config.cmake outside CMake's
@@ -148,9 +158,13 @@ jobs:
             # <NAME>_DIR at it explicitly for the consumer configure.
             name=$(echo "$dep" | tr '[:lower:]-' '[:upper:]_')
             cfg=$(find "$DEPS_PREFIX" -name "${name}Config.cmake" -print -quit)
-            DEP_DIR_FLAGS="${DEP_DIR_FLAGS:-} -D${name}_DIR=$(dirname "$cfg")"
+            if [ -n "$cfg" ]; then
+              DEP_DIR_FLAGS="${DEP_DIR_FLAGS} -D${name}_DIR=$(dirname "$cfg")"
+            fi
           done
           echo "DEP_DIR_FLAGS=$DEP_DIR_FLAGS" >> "$GITHUB_ENV"
+          # Test scripts of some projects invoke installed dep binaries
+          echo "$DEPS_PREFIX/bin" >> "$GITHUB_PATH"
       - name: Configure + build
         run: |
           set -euxo pipefail
@@ -189,6 +203,7 @@ jobs:
       - name: Build BIC-MNI deps
         run: |
           set -euxo pipefail
+          DEP_DIR_FLAGS=""
           for dep in $DEPS; do
             if [ "$dep" = libminc ]; then
               # TEMPORARY (ci validation): libminc with installed-config fixes
@@ -198,6 +213,7 @@ jobs:
               git clone --depth 1 -b develop-1.9.18 "https://github.com/BIC-MNI/$dep.git" "dep-$dep" \
                 || git clone --depth 1 "https://github.com/BIC-MNI/$dep.git" "dep-$dep"
             fi
+            # shellcheck disable=SC2086 # DEP_DIR_FLAGS is a list of -D flags
             cmake -B "dep-$dep/build" -S "dep-$dep" \
               -DCMAKE_C_COMPILER_LAUNCHER=ccache \
               -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -206,7 +222,8 @@ jobs:
               -DCMAKE_PREFIX_PATH="$DEPS_PREFIX" \
               -DCMAKE_INSTALL_LIBDIR=lib \
               -DBUILD_TESTING=OFF \
-              -DLIBMINC_MINC1_SUPPORT=ON
+              -DLIBMINC_MINC1_SUPPORT=ON \
+              $DEP_DIR_FLAGS
             cmake --build "dep-$dep/build" -j"$(sysctl -n hw.ncpu)"
             sudo cmake --install "dep-$dep/build"
             # These projects install <NAME>Config.cmake outside CMake's
@@ -214,9 +231,13 @@ jobs:
             # <NAME>_DIR at it explicitly for the consumer configure.
             name=$(echo "$dep" | tr '[:lower:]-' '[:upper:]_')
             cfg=$(find "$DEPS_PREFIX" -name "${name}Config.cmake" -print -quit)
-            DEP_DIR_FLAGS="${DEP_DIR_FLAGS:-} -D${name}_DIR=$(dirname "$cfg")"
+            if [ -n "$cfg" ]; then
+              DEP_DIR_FLAGS="${DEP_DIR_FLAGS} -D${name}_DIR=$(dirname "$cfg")"
+            fi
           done
           echo "DEP_DIR_FLAGS=$DEP_DIR_FLAGS" >> "$GITHUB_ENV"
+          # Test scripts of some projects invoke installed dep binaries
+          echo "$DEPS_PREFIX/bin" >> "$GITHUB_PATH"
       - name: Configure + build
         run: |
           set -euxo pipefail
